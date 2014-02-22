@@ -1,0 +1,97 @@
+#!/usr/bin/env python
+# -*- coding: UTF-8 -*-
+#########################################
+"""
+Usage: adblock [--version] [--help]
+               <command> [<sub-command>...]
+
+The available commands are:
+  update    Updates the current host file with the remote updates
+  diff      Shows the differences between the local hosts file
+            versus the remote one
+  view      View the local/remote hosts file contents
+  help      Shows the current program version and exits
+  version   Shows this help message and exits
+
+"""
+#########################################
+"""
+Copyright (c) 2013, David Silva
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+        notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+        notice, this list of conditions and the following disclaimer in the
+        documentation and/or other materials provided with the distribution.
+    * Neither the name of the <organization> nor the
+        names of its contributors may be used to endorse or promote products
+        derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
+
+import os, sys, inspect
+from docopt import docopt
+
+## add modules directory to the sys.path
+modules_path = os.path.realpath(
+  os.path.abspath(
+    os.path.join(
+      os.path.split(
+        inspect.getfile(inspect.currentframe())
+      )[0], "modules"
+    )
+  )
+)
+if modules_path not in sys.path:
+    sys.path.insert(0, modules_path)
+
+import adblock_utils
+
+## utility functions
+
+def __handle_input(doc, input_args):
+    """
+    Handles the given input arguments
+    """
+    # update
+    if input_args["<command>"] == "update":
+        import adblock_update
+        adblock_update.execute()
+    # diff
+    elif input_args["<command>"] == "diff":
+        import adblock_diff
+        adblock_diff.execute()
+    # view
+    elif input_args["<command>"] == "view":
+        import adblock_view
+        adblock_view.execute()
+    # version
+    elif input_args["<command>"] == "version":
+        adblock_utils.print_version()
+    # help
+    elif input_args['<command>'] in ['help', None]:
+        adblock_utils.print_help(doc)
+    # invalid command
+    else:
+        adblock_utils.error("%r is not a valid adblock command. See 'adblock help'."
+            % input_args['<command>'])
+
+# run our main interpreter
+if __name__ == "__main__":
+    args = docopt(__doc__,
+    options_first=True,
+    version=adblock_utils.VERSION_STR)
+    __handle_input(__doc__, args)
