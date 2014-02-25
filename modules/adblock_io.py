@@ -52,7 +52,7 @@ def __read_and_filter_hosts_file():
                 if read_mvps and line not in (MVPS_END_STR, '#'):
                     data += line + '\n'
     size = len(data)
-    return data[:size-1] if size > 0 else None
+    return data[len(MVPS_START_STR)+1:size-1] if size > 0 else None
 
 def read_local_hosts():
     """

@@ -38,6 +38,58 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 from docopt import docopt
+import adblock_io
+import adblock_utils
+
+# differences keys
+ADDED_KEY = "a"
+DELETED_KEY = "d"
+
+def show_diff():
+    """
+    Shows the differences between the local and the remote
+    MVPS hosts file
+    """
+    # local
+    local_contents = adblock_io.read_local_hosts()
+    # remote
+    remote_contents = adblock_io.read_remote_hosts()
+    if remote_contents is None:
+        adblock_utils.print_error("No remote contents were found")
+    else:
+        # compare
+        result = compare_diff(local_contents, remote_contents)
+        print "No differences were found" if len(result) == 0 \
+                else format_diff_result(result)
+
+def compare_diff(local, remote):
+    """
+    Compares the local and remote MVPS hosts against each other
+    It an dictionary with two keys:
+      - ADDED_KEY (="a"): an array with the added hosts from the remote side
+      - DELETED_KEY (="d"): an array with the deleted hosts form the remote side
+    """
+    if local is None:
+        added = [("+ %s" % x.strip()) for x in remote.split('\n')]
+        deleted = []
+    else:
+        local = local.split('\n')
+        remote = remote.split('\n')
+        added = [("+ %s" % x.strip()) for x in remote if x not in local]
+        deleted = [("- %s" % x.strip()) for x in local if x not in remote]
+    return {ADDED_KEY: added, DELETED_KEY: deleted}
+
+def format_diff_result(result):
+    """
+    formats the output of the compare_diff function.
+    It returns a string representation of the result with the following order:
+      - 1st the deleted entries
+      - 2nd the new entries
+    """
+    diff = '\n'.join(result[DELETED_KEY])
+    diff += '\n' if len(diff) > 0 else ''
+    diff += '\n'.join(result[ADDED_KEY])
+    return diff
 
 # concrete module function
 def execute(args=None):
@@ -45,5 +97,5 @@ def execute(args=None):
     Updates the current local hosts file with the Updates
     from the remote MVPS hosts file
     """
-    args = docopt(__doc__)
-    print "args: ", args
+    docopt(__doc__, args)
+    show_diff()
