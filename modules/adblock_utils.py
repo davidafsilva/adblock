@@ -38,11 +38,11 @@ VERSION = "0.1"
 # version string
 VERSION_STR = "adblock hosts updater v%s (c) David Silva 2013" % VERSION
 
-def print_error(message):
+def print_error(caller, message):
     """
     Logs an error message
     """
-    sys.stderr.write("%s: %s\n" % (os.path.basename(__file__), message))
+    sys.stderr.write("%s: %s\n" % (os.path.basename(caller).split('.')[0], message))
 
 def print_help(doc):
     """

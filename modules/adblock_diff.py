@@ -39,28 +39,38 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from docopt import docopt
 import adblock_io
+import adblock_http
 import adblock_utils
 
 # differences keys
 ADDED_KEY = "a"
 DELETED_KEY = "d"
 
-def show_diff():
+def get_diff():
     """
-    Shows the differences between the local and the remote
+    Gets the differences between the local and the remote
     MVPS hosts file
     """
     # local
     local_contents = adblock_io.read_local_hosts()
     # remote
-    remote_contents = adblock_io.read_remote_hosts()
+    remote_contents = adblock_http.get_remote_mvps_hosts()
+    result = None
     if remote_contents is None:
-        adblock_utils.print_error("No remote contents were found")
+        adblock_utils.print_error(__file__, "No remote contents were found")
     else:
         # compare
         result = compare_diff(local_contents, remote_contents)
-        print "No differences were found" if len(result) == 0 \
-                else format_diff_result(result)
+    return result
+
+def show_diff():
+    """
+    Shows the differences between the local and the remote
+    MVPS hosts file
+    """
+    diff = get_diff()
+    print "No differences were found" if len(diff[DELETED_KEY]) == 0 and \
+            len(diff[ADDED_KEY]) == 0 else format_diff_result(diff)
 
 def compare_diff(local, remote):
     """
@@ -94,8 +104,8 @@ def format_diff_result(result):
 # concrete module function
 def execute(args=None):
     """
-    Updates the current local hosts file with the Updates
-    from the remote MVPS hosts file
+    Shows the differences between the local and the remote
+    MVPS hosts file
     """
     docopt(__doc__, args)
     show_diff()

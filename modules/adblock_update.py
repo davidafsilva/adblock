@@ -39,6 +39,27 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 from docopt import docopt
+import adblock_utils
+import adblock_io
+import adblock_diff
+
+def update():
+    """
+    Updates the current local hosts file with the Updates
+    from the remote MVPS hosts file
+    """
+    if not adblock_io.has_rw_permission_local_hosts():
+        adblock_utils.print_error(__file__, \
+            "No read/write permissions on local hosts file.")
+        exit()
+    changes = adblock_diff.get_diff()
+    deleted = changes[adblock_diff.DELETED_KEY]
+    added = changes[adblock_diff.ADDED_KEY]
+    if len(deleted) == 0 and len(added) == 0:
+        print "Local hosts file is currently up-to-date."
+    else:
+        adblock_io.apply_changes_to_local_hosts(deleted, added)
+        print "Local hosts file has been updated!"
 
 # concrete module function
 def execute(args=None):
@@ -46,5 +67,5 @@ def execute(args=None):
     Updates the current local hosts file with the Updates
     from the remote MVPS hosts file
     """
-    args = docopt(__doc__)
-    print "args: ", args
+    docopt(__doc__, args)
+    update()

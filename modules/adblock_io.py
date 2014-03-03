@@ -29,6 +29,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 import adblock_http
+import os
+import tempfile
+import shutil
 
 # hosts file
 HOSTS_FILE = "/etc/hosts"
@@ -49,10 +52,55 @@ def __read_and_filter_hosts_file():
             if len(line) > 0:
                 line = line.strip('\n')
                 read_mvps = read_mvps or line == MVPS_START_STR
-                if read_mvps and line not in (MVPS_END_STR, '#'):
+                if line == MVPS_END_STR:
+                    break
+                elif read_mvps and not line == '#':
                     data += line + '\n'
     size = len(data)
     return data[len(MVPS_START_STR)+1:size-1] if size > 0 else None
+
+def apply_changes_to_local_hosts(deleted, added):
+    """
+    Applies the given changes to the local hosts file
+    """
+    if len(deleted) == 0 and len(added) == 0:
+        return
+    # create a temporary file
+    import time
+    utc_ts = int(time.time())
+    pre = 'hosts.%d' % utc_ts
+    suf = '.adblock'
+    with tempfile.NamedTemporaryFile(prefix=pre, suffix=suf) as tmp_file:
+        in_mvps = False
+        # write the hosts to a temporary file
+        with open(HOSTS_FILE, 'r') as ofp:
+            prev_mpvps_found = False
+            for line in ofp:
+                line = line.strip('\n')
+                in_mvps = in_mvps or line == MVPS_START_STR
+                if line == MVPS_END_STR and in_mvps:
+                    in_mvps = False
+                    prev_mpvps_found = True
+                    for entry in added:
+                        __write(tmp_file, entry[2:])
+                if not in_mvps or (in_mvps and line not in deleted):
+                    __write(tmp_file, line)
+            if not prev_mpvps_found:
+                # first entries!
+                tmp_file.write('\n%s\n#\n' % MVPS_START_STR)
+                for entry in added:
+                    __write(tmp_file, entry[2:])
+                __write(tmp_file, '%s\n' % MVPS_END_STR)
+        # everything written to the tmp file
+        # now replace the original host contents
+        shutil.copyfile(tmp_file.name, HOSTS_FILE)
+
+def __write(file_p, content):
+    """
+    Writes the content to fp and flushes if necessary
+    """
+    file_p.write('%s\n' % content)
+    file_p.flush()
 
 def read_local_hosts():
     """
@@ -61,8 +109,9 @@ def read_local_hosts():
     """
     return __read_and_filter_hosts_file()
 
-def read_remote_hosts():
+def has_rw_permission_local_hosts():
     """
-    Reads the remote MVPS hosts file contents
+    Check if the user currently executing the script has
+    read-write access to the local hosts file
     """
-    return adblock_http.get_remote_mvps_hosts()
+    return os.access(HOSTS_FILE, os.W_OK) and os.access(HOSTS_FILE, os.R_OK)

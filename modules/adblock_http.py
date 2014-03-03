@@ -128,9 +128,9 @@ def __get(url):
         response = urllib2.urlopen(request)
         return response
     except urllib2.HTTPError, ex:
-        adblock_utils.print_error(__handle_http_error(ex))
+        adblock_utils.print_error(__file__, __handle_http_error(ex))
     except urllib2.URLError, ex:
-        adblock_utils.print_error("Unable to reach the server: %s"
+        adblock_utils.print_error(__file__, "Unable to reach the server: %s"
             % (ex.reason))
     return None
 

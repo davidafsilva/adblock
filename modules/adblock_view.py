@@ -40,6 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from docopt import docopt
 import adblock_utils
 import adblock_io
+import adblock_http
 
 # view local
 def view_local():
@@ -54,7 +55,7 @@ def view_remote():
     """
     Views the remote hosts file contents
     """
-    contents = adblock_io.read_remote_hosts()
+    contents = adblock_http.get_remote_mvps_hosts()
     print "No remote MVPS filters were found" if contents is None else contents
 
 # concrete module function
